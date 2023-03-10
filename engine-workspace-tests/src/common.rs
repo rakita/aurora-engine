@@ -1,15 +1,5 @@
-use aurora_workspace::contract::EthProverConfig;
-use aurora_workspace::{types::AccountId, EvmContract, InitConfig};
-use aurora_engine::parameters::NewCallArgs;
-use std::str::FromStr;
-use workspaces::network::Sandbox;
-use workspaces::types::{KeyType, SecretKey};
-use workspaces::{Worker, Account};
+use crate::*;
 
-pub const EVM_ACCOUNT_ID: &str = "aurora.test.near";
-const AURORA_LOCAL_CHAIN_ID: u64 = 1313161556;
-pub const OWNER_ACCOUNT_ID: &str = "owner.test.near";
-const PROVER_ACCOUNT_ID: &str = "prover.test.near";
 
 pub async fn create_account(worker: &Worker<Sandbox>, id: &str, sk: Option<SecretKey>) -> anyhow::Result<Account> {
     let secret = sk.unwrap_or_else(|| SecretKey::from_random(KeyType::ED25519));

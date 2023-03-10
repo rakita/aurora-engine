@@ -1,0 +1,31 @@
+[package]
+name = "engine-workspace-tests"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aurora-workspace = { git = "https://github.com/aurora-is-near/aurora-workspace.git", rev = "e192c4b152826263499380ba2917cb4ee5946c91" }
+aurora-workspace-types = { git = "https://github.com/aurora-is-near/aurora-workspace.git", rev="e192c4b152826263499380ba2917cb4ee5946c91" }
+aurora-engine-types = { path = "../engine-types", default-features = false, features = ["std", "impl-serde"] }
+aurora-engine = { path = "../engine", default-features = false, features = ["std", "tracing", "impl-serde"] }
+aurora-engine-sdk = { path = "../engine-sdk", default-features = false, features = ["std"] }
+aurora-engine-precompiles = { path = "../engine-precompiles", default-features = false, features = ["std"] }
+aurora-engine-transactions = { path = "../engine-transactions", default-features = false, features = ["std", "impl-serde"] }
+aurora-engine-tests = {path = "../engine-tests", default-features = false}
+engine-standalone-storage = { path = "../engine-standalone-storage" }
+engine-standalone-tracing = { path = "../engine-standalone-tracing", default-features = false, features = ["impl-serde"] }
+workspaces = { git = "https://github.com/near/workspaces-rs.git", rev = "34bb786470700c7f95b0c88201a58b8792b6dba1" }
+ethabi = "18.0.0"
+hex = "0.4.3"
+ethereum-types = "0.13.1"
+ethereum-tx-sign = "6.0.1"
+anyhow = "1"
+tokio = "1.21.2"
+serde_json = "1.0.64"
+near-units = "0.2.0"
+base64 = "0.13.1"
+borsh = "0.9.3"
+serde = { version = "1", features = ["derive"] }
+near-sdk = "4.0"

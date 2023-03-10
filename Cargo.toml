@@ -37,11 +37,11 @@ members = [
     "engine-standalone-storage",
     "engine-standalone-tracing",
     "engine-tests",
+    "engine-workspace-tests",
     "engine-transactions",
     "engine-types",
 ]
 exclude = [
-    "etc/tests/state-migration-test",
     "etc/tests/ft-receiver",
     "etc/tests/benchmark-contract",
     "etc/tests/self-contained-5bEgfRQ",

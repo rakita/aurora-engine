@@ -1,18 +1,4 @@
-use aurora_workspace::{
-    contract::{EthProverConfig}, types::{SecretKey, KeyType},
-};
-use aurora_engine::parameters::{NewCallArgs, InitCallArgs, PauseEthConnectorCallArgs, SetContractDataCallArgs};
-use aurora_engine::fungible_token::FungibleTokenMetadata;
-use aurora_engine_types::account_id::AccountId;
-use crate::common;
-use aurora_workspace_types::{AccountId as WorkspaceAccountId, Address};
-use borsh::{BorshDeserialize, BorshSerialize};
-use serde::{Serialize, Deserialize};
-use std::str::FromStr;
-
-pub const OWNER_ACCOUNT_ID: &str = "owner.test.near";
-const PROVER_ACCOUNT_ID: &str = "prover.test.near";
-const WASM_PATH: &str = "../../bin/aurora-local.wasm";
+use crate::*;
 
 #[tokio::test]
 async fn test_new_eth_connector() {

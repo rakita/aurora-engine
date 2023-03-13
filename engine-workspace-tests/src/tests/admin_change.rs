@@ -8,27 +8,25 @@ async fn test_new_eth_connector() {
     worker.fast_forward(1).await.unwrap();
 
     // 2. deploy the Aurora EVM in sandbox with initial call to setup admin account from sender
-    let (evm, _sk) = common::init_and_deploy_contract_with_path(&worker, WASM_PATH)
-        .await
-        .unwrap();
+    let (evm, _sk) = common::init_and_deploy_contract_with_path(
+        &worker,
+        WASM_PATH,
+    )
+    .await
+    .unwrap();
 
     let sk2 = SecretKey::from_random(KeyType::ED25519);
     let owner = worker
-        .create_tla(
-            aurora_workspace_types::AccountId::from_str(OWNER_ACCOUNT_ID).unwrap(),
-            sk2.clone(),
-        )
-        .await
-        .unwrap()
-        .into_result()
-        .unwrap();
+    .create_tla(aurora_workspace_types::AccountId::from_str(OWNER_ACCOUNT_ID).unwrap(), sk2.clone())
+    .await.unwrap()
+    .into_result().unwrap();
 
     worker.fast_forward(1).await.unwrap();
 
     let eth_prover_config = EthProverConfig::default();
 
     let args = InitCallArgs {
-        prover_account: aurora_engine_types::account_id::AccountId::from_str(
+        prover_account:aurora_engine_types::account_id::AccountId::from_str(
             eth_prover_config.account_id.as_str(),
         )
         .unwrap(),
@@ -56,20 +54,18 @@ async fn test_set_eth_connector_contract_data() {
     worker.fast_forward(1).await.unwrap();
 
     // 2. deploy the Aurora EVM in sandbox.
-    let (evm, _sk) = common::init_and_deploy_contract_with_path(&worker, WASM_PATH)
-        .await
-        .unwrap();
+    let (evm, _sk) = common::init_and_deploy_contract_with_path(
+        &worker,
+        WASM_PATH,
+    )
+    .await
+    .unwrap();
 
     let sk2 = SecretKey::from_random(KeyType::ED25519);
     let owner = worker
-        .create_tla(
-            aurora_workspace_types::AccountId::from_str(OWNER_ACCOUNT_ID).unwrap(),
-            sk2.clone(),
-        )
-        .await
-        .unwrap()
-        .into_result()
-        .unwrap();
+    .create_tla(aurora_workspace_types::AccountId::from_str(OWNER_ACCOUNT_ID).unwrap(), sk2.clone())
+    .await.unwrap()
+    .into_result().unwrap();
 
     worker.fast_forward(1).await.unwrap();
     let aur_prover_account: aurora_engine_types::account_id::AccountId =
@@ -107,24 +103,24 @@ async fn test_set_paused_flags() {
     worker.fast_forward(1).await.unwrap();
 
     // 2. deploy the Aurora EVM in sandbox.
-    let (evm, _sk) = common::init_and_deploy_contract_with_path(&worker, WASM_PATH)
-        .await
-        .unwrap();
+    let (evm, _sk) = common::init_and_deploy_contract_with_path(
+        &worker,
+        WASM_PATH,
+    )
+    .await
+    .unwrap();
+
+    
 
     worker.fast_forward(1).await.unwrap();
 
     let args = PauseEthConnectorCallArgs { paused_mask: 0 };
-
+     
     let sk2 = SecretKey::from_random(KeyType::ED25519);
     let owner = worker
-        .create_tla(
-            aurora_workspace_types::AccountId::from_str(OWNER_ACCOUNT_ID).unwrap(),
-            sk2.clone(),
-        )
-        .await
-        .unwrap()
-        .into_result()
-        .unwrap();
+    .create_tla(aurora_workspace_types::AccountId::from_str(OWNER_ACCOUNT_ID).unwrap(), sk2.clone())
+    .await.unwrap()
+    .into_result().unwrap();
 
     let result = owner
         .call(evm.as_account().id(), "set_paused_flags")
@@ -158,9 +154,7 @@ async fn test_set_owner() {
 
     worker.fast_forward(1).await.unwrap();
 
-    let args = SetOwnerArgs {
-        new_owner: AccountId::from_str("newowner.test.near").unwrap(),
-    };
+    let args = SetOwnerArgs { new_owner: AccountId::from_str("newowner.test.near").unwrap() };
 
     let result = owner
         .call(evm.as_account().id(), "set_owner")

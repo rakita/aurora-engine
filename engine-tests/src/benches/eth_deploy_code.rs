@@ -9,7 +9,7 @@ use crate::test_utils::{
 const INITIAL_BALANCE: Wei = Wei::new_u64(1000);
 const INITIAL_NONCE: u64 = 0;
 
-pub  fn eth_deploy_code_benchmark(c: &mut Criterion) {
+pub(crate) fn eth_deploy_code_benchmark(c: &mut Criterion) {
     let mut runner = deploy_evm();
     let mut rng = rand::thread_rng();
     let source_account = SecretKey::random(&mut rng);

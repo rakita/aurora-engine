@@ -6,21 +6,21 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Once;
 
-pub  struct FactoryConstructor(pub solidity::ContractConstructor);
+pub(crate) struct FactoryConstructor(pub solidity::ContractConstructor);
 
-pub  struct Factory(pub solidity::DeployedContract);
+pub(crate) struct Factory(pub solidity::DeployedContract);
 
-pub  struct Pool(pub solidity::DeployedContract);
+pub(crate) struct Pool(pub solidity::DeployedContract);
 
-pub  struct PositionManagerConstructor(pub solidity::ContractConstructor);
+pub(crate) struct PositionManagerConstructor(pub solidity::ContractConstructor);
 
-pub  struct PositionManager(pub solidity::DeployedContract);
+pub(crate) struct PositionManager(pub solidity::DeployedContract);
 
-pub  struct SwapRouterConstructor(pub solidity::ContractConstructor);
+pub(crate) struct SwapRouterConstructor(pub solidity::ContractConstructor);
 
-pub  struct SwapRouter(pub solidity::DeployedContract);
+pub(crate) struct SwapRouter(pub solidity::DeployedContract);
 
-pub  struct MintParams {
+pub(crate) struct MintParams {
     pub token0: Address,
     pub token1: Address,
     pub fee: u64,

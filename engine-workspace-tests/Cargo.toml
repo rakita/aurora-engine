@@ -13,7 +13,7 @@ aurora-engine = { path = "../engine", default-features = false, features = ["std
 aurora-engine-sdk = { path = "../engine-sdk", default-features = false, features = ["std"] }
 aurora-engine-precompiles = { path = "../engine-precompiles", default-features = false, features = ["std"] }
 aurora-engine-transactions = { path = "../engine-transactions", default-features = false, features = ["std", "impl-serde"] }
-aurora-engine-tests = {path = "../engine-tests", default-features = false }
+aurora-engine-tests = {path = "../engine-tests", default-features = false}
 engine-standalone-storage = { path = "../engine-standalone-storage" }
 engine-standalone-tracing = { path = "../engine-standalone-tracing", default-features = false, features = ["impl-serde"] }
 workspaces = { git = "https://github.com/near/workspaces-rs.git", rev = "34bb786470700c7f95b0c88201a58b8792b6dba1" }

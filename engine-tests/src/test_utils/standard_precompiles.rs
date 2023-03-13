@@ -2,9 +2,9 @@ use crate::prelude::{transactions::legacy::TransactionLegacy, U256};
 use crate::test_utils::solidity;
 use std::path::{Path, PathBuf};
 
-pub  struct PrecompilesConstructor(pub solidity::ContractConstructor);
+pub(crate) struct PrecompilesConstructor(pub solidity::ContractConstructor);
 
-pub  struct PrecompilesContract(pub solidity::DeployedContract);
+pub(crate) struct PrecompilesContract(pub solidity::DeployedContract);
 
 impl From<PrecompilesConstructor> for solidity::ContractConstructor {
     fn from(c: PrecompilesConstructor) -> Self {

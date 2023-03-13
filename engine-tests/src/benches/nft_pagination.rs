@@ -12,7 +12,7 @@ const INITIAL_NONCE: u64 = 0;
 static DOWNLOAD_ONCE: Once = Once::new();
 static COMPILE_ONCE: Once = Once::new();
 
-pub  fn measure_gas_usage(
+pub(crate) fn measure_gas_usage(
     total_tokens: usize,
     data_size: usize,
     tokens_per_page: usize,

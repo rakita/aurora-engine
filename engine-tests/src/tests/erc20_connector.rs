@@ -793,7 +793,7 @@ pub mod sim_tests {
             .assert_success();
     }
 
-    pub(crate) fn transfer_nep_141_to_erc_20(
+    pub  fn transfer_nep_141_to_erc_20(
         nep_141: &UserAccount,
         erc20: &ERC20,
         source: &UserAccount,
@@ -858,7 +858,7 @@ pub mod sim_tests {
         U256::from_big_endian(&test_utils::unwrap_success(submit_result))
     }
 
-    pub(crate) fn deploy_erc20_from_nep_141(
+    pub  fn deploy_erc20_from_nep_141(
         nep_141: &UserAccount,
         aurora: &AuroraAccount,
     ) -> ERC20 {

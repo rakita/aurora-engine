@@ -7,7 +7,7 @@ use crate::test_utils::solidity;
 pub struct WethConstructor(solidity::ContractConstructor);
 
 impl WethConstructor {
-    pub fn load() -> Self {
+    pub fn _load() -> Self {
         Self(solidity::ContractConstructor::compile_from_source(
             "src/tests/res",
             "src/tests/res",
@@ -16,7 +16,7 @@ impl WethConstructor {
         ))
     }
 
-    pub fn deploy(&self, nonce: U256) -> TransactionLegacy {
+    pub fn _deploy(&self, nonce: U256) -> TransactionLegacy {
         self.0.deploy_without_constructor(nonce)
     }
 

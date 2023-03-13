@@ -6,7 +6,7 @@ use ethabi::Constructor;
 
 const DEFAULT_GAS: u64 = 1_000_000_000;
 
-pub(crate) struct RandomConstructor(pub solidity::ContractConstructor);
+pub struct RandomConstructor(pub solidity::ContractConstructor);
 
 impl RandomConstructor {
     pub fn load() -> Self {
@@ -41,7 +41,7 @@ impl From<RandomConstructor> for solidity::ContractConstructor {
     }
 }
 
-pub(crate) struct Random {
+pub struct Random {
     contract: solidity::DeployedContract,
 }
 

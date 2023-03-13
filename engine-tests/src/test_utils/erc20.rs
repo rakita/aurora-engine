@@ -4,9 +4,9 @@ use aurora_engine_transactions::NormalizedEthTransaction;
 use std::path::{Path, PathBuf};
 use std::sync::Once;
 
-pub(crate) struct ERC20Constructor(pub solidity::ContractConstructor);
+pub  struct ERC20Constructor(pub solidity::ContractConstructor);
 
-pub(crate) struct ERC20(pub solidity::DeployedContract);
+pub  struct ERC20(pub solidity::DeployedContract);
 
 impl From<ERC20Constructor> for solidity::ContractConstructor {
     fn from(c: ERC20Constructor) -> Self {
@@ -183,7 +183,7 @@ impl ERC20 {
     }
 }
 
-pub(crate) fn legacy_into_normalized_tx(tx: TransactionLegacy) -> NormalizedEthTransaction {
+pub  fn legacy_into_normalized_tx(tx: TransactionLegacy) -> NormalizedEthTransaction {
     NormalizedEthTransaction {
         address: Default::default(),
         chain_id: None,

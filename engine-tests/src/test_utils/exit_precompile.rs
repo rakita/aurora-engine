@@ -4,7 +4,7 @@ use crate::prelude::{
 use crate::test_utils::{self, solidity, AuroraRunner, Signer};
 use near_vm_errors::VMError;
 
-pub(crate) struct TesterConstructor(pub solidity::ContractConstructor);
+pub  struct TesterConstructor(pub solidity::ContractConstructor);
 
 const DEPLOY_CONTRACT_GAS: u64 = 1_000_000_000;
 pub const DEST_ACCOUNT: &str = "target.aurora";
@@ -45,7 +45,7 @@ impl TesterConstructor {
     }
 }
 
-pub(crate) struct Tester {
+pub  struct Tester {
     pub contract: solidity::DeployedContract,
 }
 
@@ -222,4 +222,4 @@ impl Tester {
 }
 
 #[derive(Debug)]
-pub(crate) struct Revert(Vec<u8>);
+pub  struct Revert(Vec<u8>);

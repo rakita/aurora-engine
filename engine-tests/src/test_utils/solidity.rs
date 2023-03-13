@@ -5,12 +5,12 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-pub(crate) struct ContractConstructor {
+pub  struct ContractConstructor {
     pub abi: ethabi::Contract,
     pub code: Vec<u8>,
 }
 
-pub(crate) struct DeployedContract {
+pub  struct DeployedContract {
     pub abi: ethabi::Contract,
     pub address: Address,
 }

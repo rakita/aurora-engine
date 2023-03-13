@@ -8,7 +8,7 @@ const MINT_AMOUNT: u64 = 1_000_000_000;
 const LIQUIDITY_AMOUNT: u64 = MINT_AMOUNT / 2;
 const OUTPUT_AMOUNT: u64 = LIQUIDITY_AMOUNT / 100;
 
-pub(crate) fn uniswap_benchmark(c: &mut Criterion, context: &mut UniswapTestContext) {
+pub  fn uniswap_benchmark(c: &mut Criterion, context: &mut UniswapTestContext) {
     let calling_account_id = "some-account.near";
     let chain_id = Some(context.runner.chain_id);
     let (token_a, token_b) = context.create_token_pair(MINT_AMOUNT.into());

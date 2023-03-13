@@ -1,8 +1,12 @@
 #[cfg(test)]
-mod benches;
+pub mod benches;
+
 #[cfg(test)]
-mod prelude;
+pub mod prelude;
+
 #[cfg(test)]
 pub mod test_utils;
 #[cfg(test)]
-mod tests;
+pub mod tests;
+
+

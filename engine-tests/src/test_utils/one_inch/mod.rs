@@ -2,9 +2,9 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Once;
 
-pub(crate) mod liquidity_protocol;
+pub  mod liquidity_protocol;
 
-pub(crate) fn download_and_compile_solidity_sources(
+pub  fn download_and_compile_solidity_sources(
     repo_name: &str,
     download_once: &'static Once,
     compile_once: &'static Once,

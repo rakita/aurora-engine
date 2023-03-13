@@ -337,7 +337,7 @@ impl StandaloneRunner {
         self.storage_dir.close().unwrap();
     }
 
-    pub(crate) fn template_tx_msg(
+    pub  fn template_tx_msg(
         storage: &mut Storage,
         env: &env::Fixed,
         transaction_position: u16,

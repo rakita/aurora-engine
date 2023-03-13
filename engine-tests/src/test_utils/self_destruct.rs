@@ -5,7 +5,7 @@ use crate::prelude::{
 use crate::test_utils::{self, solidity, AuroraRunner, Signer};
 use borsh::BorshSerialize;
 
-pub(crate) struct SelfDestructFactoryConstructor(pub solidity::ContractConstructor);
+pub  struct SelfDestructFactoryConstructor(pub solidity::ContractConstructor);
 
 const DEFAULT_GAS: u64 = 1_000_000_000;
 
@@ -36,7 +36,7 @@ impl SelfDestructFactoryConstructor {
     }
 }
 
-pub(crate) struct SelfDestructFactory {
+pub  struct SelfDestructFactory {
     contract: solidity::DeployedContract,
 }
 
@@ -78,7 +78,7 @@ impl SelfDestructFactory {
     }
 }
 
-pub(crate) struct SelfDestructConstructor(pub solidity::ContractConstructor);
+pub  struct SelfDestructConstructor(pub solidity::ContractConstructor);
 
 impl SelfDestructConstructor {
     pub fn load() -> Self {
@@ -88,7 +88,7 @@ impl SelfDestructConstructor {
     }
 }
 
-pub(crate) struct SelfDestruct {
+pub  struct SelfDestruct {
     contract: solidity::DeployedContract,
 }
 

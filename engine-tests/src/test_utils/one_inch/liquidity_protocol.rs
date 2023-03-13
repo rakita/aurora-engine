@@ -7,13 +7,13 @@ use std::sync::Once;
 static DOWNLOAD_ONCE: Once = Once::new();
 static COMPILE_ONCE: Once = Once::new();
 
-pub(crate) struct Helper<'a> {
+pub  struct Helper<'a> {
     pub runner: &'a mut test_utils::AuroraRunner,
     pub signer: &'a mut test_utils::Signer,
 }
 
 impl<'a> Helper<'a> {
-    pub(crate) fn create_mooniswap_deployer(
+    pub  fn create_mooniswap_deployer(
         &mut self,
     ) -> (SubmitResult, ExecutionProfile, PoolDeployer) {
         let artifacts_path = download_and_compile_solidity_sources();
@@ -48,7 +48,7 @@ impl<'a> Helper<'a> {
         (result, profile, deployer)
     }
 
-    pub(crate) fn create_pool_factory(
+    pub  fn create_pool_factory(
         &mut self,
         pool_deployer: &PoolDeployer,
     ) -> (SubmitResult, ExecutionProfile, PoolFactory) {
@@ -78,7 +78,7 @@ impl<'a> Helper<'a> {
         (result, profile, pool_factory)
     }
 
-    pub(crate) fn create_pool(
+    pub  fn create_pool(
         &mut self,
         pool_factory: &PoolFactory,
         token_a: Address,
@@ -110,7 +110,7 @@ impl<'a> Helper<'a> {
         (result, profile, pool)
     }
 
-    pub(crate) fn create_erc20(&mut self, name: &str, symbol: &str) -> test_utils::erc20::ERC20 {
+    pub  fn create_erc20(&mut self, name: &str, symbol: &str) -> test_utils::erc20::ERC20 {
         let constructor = test_utils::erc20::ERC20Constructor::load();
         let nonce = self.signer.use_nonce();
         test_utils::erc20::ERC20(self.runner.deploy_contract(
@@ -120,7 +120,7 @@ impl<'a> Helper<'a> {
         ))
     }
 
-    pub(crate) fn mint_erc20_tokens(
+    pub  fn mint_erc20_tokens(
         &mut self,
         token: &test_utils::erc20::ERC20,
         dest: Address,
@@ -135,7 +135,7 @@ impl<'a> Helper<'a> {
         result
     }
 
-    pub(crate) fn approve_erc20_tokens(
+    pub  fn approve_erc20_tokens(
         &mut self,
         token: &test_utils::erc20::ERC20,
         dest: Address,
@@ -150,7 +150,7 @@ impl<'a> Helper<'a> {
         result
     }
 
-    pub(crate) fn pool_deposit(
+    pub  fn pool_deposit(
         &mut self,
         pool: &Pool,
         args: DepositArgs,
@@ -171,7 +171,7 @@ impl<'a> Helper<'a> {
         )
     }
 
-    pub(crate) fn pool_swap(
+    pub  fn pool_swap(
         &mut self,
         pool: &Pool,
         args: SwapArgs,
@@ -189,7 +189,7 @@ impl<'a> Helper<'a> {
         )
     }
 
-    pub(crate) fn pool_withdraw(
+    pub  fn pool_withdraw(
         &mut self,
         pool: &Pool,
         args: WithdrawArgs,
@@ -224,20 +224,20 @@ impl<'a> Helper<'a> {
     }
 }
 
-pub(crate) struct PoolDeployer(solidity::DeployedContract);
+pub  struct PoolDeployer(solidity::DeployedContract);
 
-pub(crate) struct PoolFactory(solidity::DeployedContract);
+pub  struct PoolFactory(solidity::DeployedContract);
 
-pub(crate) struct Pool(solidity::DeployedContract);
+pub  struct Pool(solidity::DeployedContract);
 
-pub(crate) struct DepositArgs {
+pub  struct DepositArgs {
     pub min_token_a: U256,
     pub min_token_b: U256,
     pub max_token_a: U256,
     pub max_token_b: U256,
 }
 
-pub(crate) struct SwapArgs {
+pub  struct SwapArgs {
     pub src_token: Address,
     pub dst_token: Address,
     pub amount: U256,
@@ -245,7 +245,7 @@ pub(crate) struct SwapArgs {
     pub referral: Address,
 }
 
-pub(crate) struct WithdrawArgs {
+pub  struct WithdrawArgs {
     pub amount: U256,
     pub min_token_a: U256,
     pub min_token_b: U256,

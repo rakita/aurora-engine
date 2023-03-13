@@ -13,8 +13,6 @@ publish = false
 autobenches = false
 
 [dependencies]
-
-[dev-dependencies]
 aurora-engine = { path = "../engine", default-features = false, features = ["std", "tracing", "impl-serde"] }
 aurora-engine-test-doubles = { path = "../engine-test-doubles", default-features = false }
 aurora-engine-types = { path = "../engine-types", default-features = false, features = ["std", "impl-serde"] }
@@ -47,6 +45,7 @@ libsecp256k1 = { version = "0.7.0", default-features = false }
 rand = "0.8.5"
 criterion = "0.4.0"
 git2 = "0.16"
+
 tempfile = "3.2.0"
 walrus = "0.19"
 

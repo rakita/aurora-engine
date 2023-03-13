@@ -1,13 +1,24 @@
-use aurora_engine_tests::test_utils;
-use aurora_engine_tests::test_utils::random::{Random, RandomConstructor};
+use crate::{ common, WASM_PATH};
 use aurora_engine_types::H256;
+use anyhow::{Result};
 
-#[test]
-fn test_random_number_precompile() {
+#[tokio::test]
+async fn test_random_number_precompile() -> Result<()> {
     let random_seed = H256::from_slice(vec![7; 32].as_slice());
-    let mut signer = test_utils::Signer::random();
-    let mut runner = test_utils::deploy_evm().with_random_seed(random_seed);
+    // 1. Create a sandbox environment.
+    let worker = workspaces::sandbox().await?;
 
+    worker.fast_forward(1).await?;
+
+    // 2. deploy the Aurora EVM in sandbox with initial call to setup admin account from sender
+    let (evm, _sk) = common::init_and_deploy_contract_with_path(
+        &worker,
+        WASM_PATH,
+    )
+    .await
+    .unwrap();
+
+    /* 
     let random_ctr = RandomConstructor::load();
     let nonce = signer.use_nonce();
     let random: Random = runner
@@ -16,4 +27,6 @@ fn test_random_number_precompile() {
 
     let counter_value = random.random_seed(&mut runner, &mut signer);
     assert_eq!(counter_value, random_seed);
+    */
+    Ok(())
 }

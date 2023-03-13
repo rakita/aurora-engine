@@ -29,6 +29,8 @@ const WASM_PATH: &str = "../../bin/aurora-local.wasm";
 #[cfg(test)]
 pub mod tests;
 
+pub mod prelude;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NewOwnerArgs {
     pub new_owner: AccountId,

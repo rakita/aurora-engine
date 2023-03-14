@@ -1,21 +1,38 @@
+use super::hex_to_vec;
+use crate::prelude::Address;
 use ethabi::{Constructor, Contract};
 use ethereum_tx_sign::LegacyTransaction;
-use serde::{Deserialize};
+use serde::Deserialize;
 use serde_json::{self, Error as JsonError};
 use std::error::Error;
 use std::fmt;
 use std::fs::{self};
 use std::io::Error as IoError;
-use std::path::{PathBuf, Path};
-use crate::prelude::Address;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use super::hex_to_vec;
+/// A struct representing an Ethereum smart contract constructor
+pub struct ContractConstructor {
+    /// The contract's ABI
+    pub abi: Contract,
+    /// The contract's bytecode
+    pub code: Vec<u8>,
+}
+
+/// A struct representing a deployed Ethereum smart contract
+pub struct DeployedContract {
+    /// The contract's ABI
+    pub abi: ethabi::Contract,
+    /// The contract's address
+    pub address: Address,
+}
 
 /// A struct representing an Ethereum smart contract artifact
 #[derive(Deserialize)]
 struct ExtendedJsonSolidityArtifact {
+    /// The contract's ABI
     abi: ethabi::Contract,
+    /// The contract's bytecode
     bytecode: String,
 }
 
@@ -58,14 +75,6 @@ impl From<hex::FromHexError> for ContractConstructorError {
     fn from(error: hex::FromHexError) -> Self {
         ContractConstructorError::HexError(error)
     }
-}
-
-/// A struct representing an Ethereum smart contract
-pub struct ContractConstructor {
-    /// The contract's ABI
-    pub abi: Contract,
-    /// The contract's bytecode
-    pub code: Vec<u8>,
 }
 
 impl ContractConstructor {
@@ -116,44 +125,23 @@ impl ContractConstructor {
             gas: u64::MAX as u128,
         }
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use anyhow::Result;
-
-    #[test]
-    fn test_deploy_transaction() -> Result<()> {
-        // Create a new contract instance from the artifact
-        let contract = ContractConstructor::new(
-            "../etc/eth-contracts/artifacts/contracts/test/Random.sol/Random.json",
-        )?;
-
-        // Generate the deployment transaction
-        let tx = contract.deploy_transaction(0, &[]);
-
-        // Verify that the transaction data is correct
-        assert_eq!(tx.nonce, 0);
-        assert_eq!(tx.chain, 1313161556);
-        assert_eq!(tx.gas, u64::MAX as u128);
-        assert_eq!(tx.to, None);
-        assert_eq!(tx.value, Default::default());
-        Ok(())
-    }
-}
-
-
-
-pub struct DeployedContract {
-    pub abi: ethabi::Contract,
-    pub address: Address,
-}
-
-
-
-impl ContractConstructor {
     /// Same as `compile_from_source` but always recompiles instead of reusing artifacts when they exist.
+    ///
+    /// # Arguments
+    ///
+    /// * `sources_root` - A reference to the root directory containing the Solidity source files.
+    /// * `artifacts_base_path` - A reference to the base path where the compiled contract artifacts will be stored.
+    /// * `contract_file` - A reference to the Solidity source file containing the contract definition.
+    /// * `contract_name` - The name of the contract to compile.
+    ///
+    /// # Returns
+    ///
+    /// A `CompiledContract` instance.
+    ///
+    /// # Panics
+    ///
+    /// This method panics if the Solidity compiler is not installed or if compilation fails.
     pub fn force_compile<P1, P2, P3>(
         sources_root: P1,
         artifacts_base_path: P2,
@@ -174,7 +162,22 @@ impl ContractConstructor {
         )
     }
 
-    // Note: `contract_file` must be relative to `sources_root`
+    /// Compiles a Solidity contract and returns a `CompiledContract` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `sources_root` - A reference to the root directory containing the Solidity source files.
+    /// * `artifacts_base_path` - A reference to the base path where the compiled contract artifacts will be stored.
+    /// * `contract_file` - A reference to the Solidity source file containing the contract definition. Note that this must be relative to `sources_root`.
+    /// * `contract_name` - The name of the contract to compile.
+    ///
+    /// # Returns
+    ///
+    /// A `CompiledContract` instance.
+    ///
+    /// # Panics
+    ///
+    /// This method panics if the Solidity compiler is not installed or if compilation fails.
     pub fn compile_from_source<P1, P2, P3>(
         sources_root: P1,
         artifacts_base_path: P2,
@@ -206,6 +209,15 @@ impl ContractConstructor {
         Self { abi, code }
     }
 
+    /// Parses an extended JSON solidity artifact from the given contract path and returns a ContractConstructor object containing the artifact's ABI and bytecode.
+    ///
+    /// # Arguments
+    ///
+    /// * `contract_path` - Path to the contract file containing the extended JSON solidity artifact
+    ///
+    /// # Returns
+    ///
+    /// A ContractConstructor object containing the contract's ABI and bytecode
     pub fn compile_from_extended_json<P>(contract_path: P) -> Self
     where
         P: AsRef<Path>,
@@ -219,6 +231,15 @@ impl ContractConstructor {
         }
     }
 
+    /// Returns a DeployedContract object containing the contract's ABI and deployed address.
+    ///
+    /// # Arguments
+    ///
+    /// * `address` - The address at which the contract was deployed
+    ///
+    /// # Returns
+    ///
+    /// A DeployedContract object containing the contract's ABI and deployed address.
     pub fn deployed_at(&self, address: Address) -> DeployedContract {
         DeployedContract {
             abi: self.abi.clone(),
@@ -227,11 +248,20 @@ impl ContractConstructor {
     }
 }
 
-
-/// Compiles a solidity contract. `source_path` gives the directory containing all solidity
-/// source files to consider (including imports). `contract_file` must be
-/// given relative to `source_path`. `output_path` gives the directory where the compiled
-/// artifacts are written. Requires Docker to be installed.
+/// Compiles a Solidity contract. The `source_path` parameter specifies the directory containing all Solidity
+/// source files to consider (including imports). The `contract_file` parameter must be given relative to `source_path`.
+/// The `output_path` parameter specifies the directory where the compiled artifacts will be written. 
+/// This function requires Docker to be installed.
+///
+/// # Arguments
+///
+/// * `source_path` - The directory containing all Solidity source files to consider (including imports)
+/// * `contract_file` - The path to the Solidity contract file, relative to `source_path`
+/// * `output_path` - The directory where the compiled artifacts will be written
+///
+/// # Panics
+///
+/// This function will panic if the Solidity contract cannot be compiled.
 fn compile<P1, P2, P3>(source_path: P1, contract_file: P2, output_path: P3)
 where
     P1: AsRef<Path>,
@@ -269,5 +299,30 @@ where
             "Could not compile solidity contracts in docker: {}",
             String::from_utf8(output.stderr).unwrap()
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::Result;
+
+    #[test]
+    fn test_deploy_transaction() -> Result<()> {
+        // Create a new contract instance from the artifact
+        let contract = ContractConstructor::new(
+            "../etc/eth-contracts/artifacts/contracts/test/Random.sol/Random.json",
+        )?;
+
+        // Generate the deployment transaction
+        let tx = contract.deploy_transaction(0, &[]);
+
+        // Verify that the transaction data is correct
+        assert_eq!(tx.nonce, 0);
+        assert_eq!(tx.chain, 1313161556);
+        assert_eq!(tx.gas, u64::MAX as u128);
+        assert_eq!(tx.to, None);
+        assert_eq!(tx.value, Default::default());
+        Ok(())
     }
 }

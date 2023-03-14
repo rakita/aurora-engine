@@ -1,15 +1,37 @@
-use ethereum_tx_sign::LegacyTransaction;
 use super::solidity::EthContract;
-// TODO: build Random precompile suited to workspace
-const DEFAULT_GAS: u64 = 1_000_000_000;
+use ethereum_tx_sign::LegacyTransaction;
 
-/* 
+pub struct RandomConstructor {
+    contract: EthContract,
+}
+
 pub struct Random {
     contract: EthContract,
     address: [u8; 20],
 }
+
+// Constructor for deploying Random contract
+impl RandomConstructor {
+    pub fn load() -> Self {
+        let contract = EthContract::new(
+            "../etc/eth-contracts/artifacts/contracts/test/Random.sol/Random.json",
+        )
+        .unwrap();
+        Self { contract }
+    }
+
+    pub fn deploy(&self, nonce: u128) -> LegacyTransaction {
+        self.contract.deploy_transaction(nonce, &[])
+    }
+}
+
+// Contract object to interact with Random contract
 impl Random {
-    pub fn new(nonce: u128) -> Self {
+    pub fn new(address: [u8; 20]) -> Self {
+        let contract = EthContract::new(
+            "../etc/eth-contracts/artifacts/contracts/test/Random.sol/Random.json",
+        )
+        .unwrap();
         Self { contract, address }
     }
 
@@ -33,4 +55,3 @@ impl Random {
         }
     }
 }
-*/

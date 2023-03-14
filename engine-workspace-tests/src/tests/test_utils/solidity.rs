@@ -3,24 +3,30 @@ use ethereum_tx_sign::LegacyTransaction;
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Error as JsonError};
 use std::error::Error;
-use std::fs::{self};
 use std::fmt;
+use std::fs::{self};
 use std::io::Error as IoError;
 use std::path::PathBuf;
 
 use super::hex_to_vec;
 
+/// A struct representing an Ethereum smart contract artifact
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Artifact {
+    /// The contract's ABI
     pub abi: Contract,
+    /// The contract's bytecode
     pub bytecode: String,
 }
 
 // EthContract Errors
 #[derive(Debug)]
 pub enum EthContractError {
+    /// An I/O error occurred
     IoError(IoError),
+    /// A JSON parsing error occurred
     JsonError(JsonError),
+    /// A hexadecimal decoding error occurred
     HexError(hex::FromHexError),
 }
 
@@ -54,12 +60,24 @@ impl From<hex::FromHexError> for EthContractError {
     }
 }
 
+/// A struct representing an Ethereum smart contract
 pub struct EthContract {
+    /// The contract's ABI
     pub abi: Contract,
+    /// The contract's bytecode
     pub code: Vec<u8>,
 }
 
 impl EthContract {
+    /// Creates a new instance of `EthContract` by reading the contract artifact from the given file path
+    ///
+    /// # Arguments
+    ///
+    /// * `artifact_path` - The file path of the contract artifact JSON file
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the `EthContract` instance if successful, or an `EthContractError` if an error occurred
     pub fn new(artifact_path: &str) -> Result<Self, EthContractError> {
         let json_str = fs::read_to_string(PathBuf::from(artifact_path))?;
         let artifact: Artifact = serde_json::from_str(&json_str)?;
@@ -70,6 +88,16 @@ impl EthContract {
         })
     }
 
+    /// Generates a transaction to deploy the contract to the blockchain
+    ///
+    /// # Arguments
+    ///
+    /// * `nonce` - A unique nonce value to ensure transaction uniqueness
+    /// * `args` - The arguments to pass to the contract constructor, if any
+    ///
+    /// # Returns
+    ///
+    /// A `LegacyTransaction` containing the transaction details for submitting to NEAR Workspace
     pub fn deploy_transaction(&self, nonce: u128, args: &[ethabi::Token]) -> LegacyTransaction {
         let data = self
             .abi
@@ -98,7 +126,9 @@ mod tests {
     #[test]
     fn test_deploy_transaction() -> Result<()> {
         // Create a new contract instance from the artifact
-        let contract = EthContract::new("../etc/eth-contracts/artifacts/contracts/test/Random.sol/Random.json")?;
+        let contract = EthContract::new(
+            "../etc/eth-contracts/artifacts/contracts/test/Random.sol/Random.json",
+        )?;
 
         // Generate the deployment transaction
         let tx = contract.deploy_transaction(0, &[]);
@@ -112,4 +142,3 @@ mod tests {
         Ok(())
     }
 }
-

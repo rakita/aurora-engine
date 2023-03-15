@@ -1,4 +1,4 @@
-use super::hex_to_vec;
+use super::{hex_to_vec, addr_to_bytes20};
 use crate::prelude::Address;
 use ethabi::{Constructor, Contract};
 use ethereum_tx_sign::LegacyTransaction;
@@ -246,6 +246,18 @@ impl ContractConstructor {
             address,
         }
     }
+
+    pub fn deploy_without_constructor(&self, nonce: u128) -> LegacyTransaction {
+        LegacyTransaction {
+            chain: 1313161556,
+            nonce,
+            gas_price: Default::default(),
+            gas: u64::MAX.into(),
+            to: None,
+            value: Default::default(),
+            data: self.code.clone(),
+        }
+    }
 }
 
 /// Compiles a Solidity contract. The `source_path` parameter specifies the directory containing all Solidity
@@ -305,6 +317,34 @@ where
 impl DeployedContract {
     pub fn new(abi: Contract, address: Address) -> Self {
         Self { abi, address }
+    }
+
+    pub fn call_method_without_args(&self, method_name: &str, nonce: u128) -> LegacyTransaction {
+        self.call_method_with_args(method_name, &[], nonce)
+    }
+
+    pub fn call_method_with_args(
+        &self,
+        method_name: &str,
+        args: &[ethabi::Token],
+        nonce: u128,
+    ) -> LegacyTransaction {
+        let data = self
+        .abi
+        .function(method_name)
+        .unwrap()
+        .encode_input(args)
+        .unwrap();
+
+        LegacyTransaction {
+            chain: 1313161556,
+            nonce,
+            gas_price: Default::default(),
+            to: Some(addr_to_bytes20(&self.address)),
+            value: Default::default(),
+            data,
+            gas: u64::MAX as u128,
+        }
     }
 }
 

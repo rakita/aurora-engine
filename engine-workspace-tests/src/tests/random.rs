@@ -1,32 +1,78 @@
-use crate::{ common, WASM_PATH};
+use crate::{
+    common,
+    test_utils::random::{Random, RandomConstructor},
+    WASM_PATH,
+};
+use anyhow::Result;
+use hex::FromHex;
 use aurora_engine_types::H256;
-use anyhow::{Result};
+use aurora_workspace_types::output::TransactionStatus;
+use ethereum_tx_sign::Transaction;
+
+const PRIVATE_KEY: [u8; 32] = [88u8; 32];
 
 #[tokio::test]
 async fn test_random_number_precompile() -> Result<()> {
-    let random_seed = H256::from_slice(vec![7; 32].as_slice());
+    let random_seed = H256::from(<[u8; 32]>::from_hex("05dd5d5b2fb21b06525485fbb135c388a961dbc8acd9f0c50d9607c263c9e6c9")?);
     // 1. Create a sandbox environment.
     let worker = workspaces::sandbox().await?;
 
     worker.fast_forward(1).await?;
 
     // 2. deploy the Aurora EVM in sandbox with initial call to setup admin account from sender
-    let (evm, _sk) = common::init_and_deploy_contract_with_path(
-        &worker,
-        WASM_PATH,
-    )
-    .await
-    .unwrap();
+    let (evm, _sk) = common::init_and_deploy_contract_with_path(&worker, WASM_PATH)
+        .await
+        .unwrap();
 
-    /* 
+    // Set the contract.
     let random_ctr = RandomConstructor::load();
-    let nonce = signer.use_nonce();
-    let random: Random = runner
-        .deploy_contract(&signer.secret_key, |ctr| ctr.deploy(nonce), random_ctr)
-        .into();
 
-    let counter_value = random.random_seed(&mut runner, &mut signer);
-    assert_eq!(counter_value, random_seed);
-    */
+    // Create a deploy transaction and sign it.
+    let signed_deploy_tx = {
+        let deploy_tx = random_ctr.deploy(0);
+        let ecdsa = deploy_tx.ecdsa(&PRIVATE_KEY).unwrap();
+        deploy_tx.sign(&ecdsa)
+    };
+
+    // Submit the transaction and get the ETH address.
+    let address = match evm
+        .as_account()
+        .submit(signed_deploy_tx)
+        .max_gas()
+        .transact()
+        .await?
+        .into_value()
+        .into_result()?
+    {
+        TransactionStatus::Succeed(bytes) => {
+            let mut address_bytes = [0u8; 20];
+            address_bytes.copy_from_slice(&bytes);
+            address_bytes
+        }
+        _ => panic!("Failed to deploy contract!"),
+    };
+    let random_contract = Random::new(random_ctr.into(), address);
+
+    // Fast forward a few blocks...
+    worker.fast_forward(10).await?;
+
+    // Create a call to the Random contract and loop!
+    let random_tx = random_contract.random_seed(1);
+    let ecdsa = random_tx.ecdsa(&PRIVATE_KEY).unwrap();
+    let signed_random_tx = random_tx.sign(&ecdsa);
+    if let TransactionStatus::Succeed(bytes) = evm
+        .as_account()
+        .submit(signed_random_tx)
+        .max_gas()
+        .transact()
+        .await?
+        .into_value()
+        .into_result()?
+    {
+        println!("RANDOM SEED: {}", hex::encode(bytes.clone()));
+        let counter_value: H256 = H256::from_slice(bytes.as_slice());
+        assert_eq!(counter_value, random_seed);
+    };
+
     Ok(())
 }

@@ -2,6 +2,7 @@ use super::{
     addr_to_bytes20,
     solidity::{self, ContractConstructor, DeployedContract},
 };
+use aurora_engine_types::types::Address;
 use ethereum_tx_sign::LegacyTransaction;
 
 /// A constructor for deploying the `Random` contract to the blockchain
@@ -47,6 +48,10 @@ pub struct Random {
 
 /// Contract object to interact with Random contract
 impl Random {
+    pub fn new (constructor: ContractConstructor, address: [u8;20]) -> Self {
+        let contract = DeployedContract::new(constructor.abi, Address::from_array(address));
+        Self { contract }
+    }
     /// Generates a random seed using the deployed Random contract
     ///
     /// # Arguments
@@ -74,5 +79,11 @@ impl Random {
             data,
             gas: u64::MAX as u128,
         }
+    }
+}
+
+impl From<solidity::DeployedContract> for Random {
+    fn from(contract: solidity::DeployedContract) -> Self {
+        Self { contract }
     }
 }

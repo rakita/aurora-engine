@@ -302,6 +302,12 @@ where
     }
 }
 
+impl DeployedContract {
+    pub fn new(abi: Contract, address: Address) -> Self {
+        Self { abi, address }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

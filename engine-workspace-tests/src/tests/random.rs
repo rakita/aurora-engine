@@ -22,7 +22,7 @@ async fn test_random_number_precompile() -> Result<()> {
         .await
         .unwrap();
 
-    // Set the contract.
+    // Get contract constructor
     let random_ctr = RandomConstructor::load();
 
     // Create a deploy transaction and sign it.
@@ -54,7 +54,7 @@ async fn test_random_number_precompile() -> Result<()> {
     // Fast forward a few blocks...
     worker.fast_forward(10).await?;
 
-    // Create a call to the Random contract and loop!
+    // Create a call to the Random contract and sign it.
     let random_tx = random_contract.random_seed(1);
     let ecdsa = random_tx.ecdsa(&PRIVATE_KEY).unwrap();
     let signed_random_tx = random_tx.sign(&ecdsa);

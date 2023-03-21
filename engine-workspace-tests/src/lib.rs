@@ -4,10 +4,8 @@ use workspaces::AccountId;
 use aurora_workspace::{
     contract::{EthProverConfig}, types::{SecretKey, KeyType},
 };
-use aurora_engine::parameters::{NewCallArgs, InitCallArgs, PauseEthConnectorCallArgs, SetContractDataCallArgs};
+use aurora_engine::parameters::{InitCallArgs, PauseEthConnectorCallArgs, SetContractDataCallArgs};
 use aurora_engine::fungible_token::FungibleTokenMetadata;
-use aurora_engine_types::account_id::AccountId as EngineAccountId;
-use aurora_workspace_types::{AccountId as WorkspaceAccountId, Address};
 use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Serialize, Deserialize};
 use std::str::FromStr;

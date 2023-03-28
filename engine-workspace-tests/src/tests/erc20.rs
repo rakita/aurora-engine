@@ -3,7 +3,6 @@ use crate::prelude::{Address, U256};
 use crate::test_utils::{
     self,
     erc20::{ERC20Constructor, ERC20},
-    Signer,
 };
 use aurora_engine::parameters::TransactionStatus;
 use aurora_engine_sdk as sdk;
@@ -262,7 +261,7 @@ fn parse_erc20_error_message(result: &[u8]) -> String {
     String::from_utf8(result[start_index..end_index].to_vec()).unwrap()
 }
 
-fn initialize_erc20() -> (test_utils::AuroraRunner, Signer, Address, ERC20) {
+fn initialize_erc20() -> (Worker<Sandbox>, Signer, Address, ERC20) {
     // set up Aurora runner and accounts
     let mut runner = crate::test_utils::deploy_evm();
     let mut rng = rand::thread_rng();

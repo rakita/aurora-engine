@@ -1,6 +1,5 @@
 use crate::{
-    common,
-    test_utils::random::{Random, RandomConstructor},
+    test_utils::{random::{Random, RandomConstructor}, init_and_deploy_contract_with_path},
     WASM_PATH,
 };
 use anyhow::Result;
@@ -18,7 +17,7 @@ async fn test_random_number_precompile() -> Result<()> {
     worker.fast_forward(1).await?;
 
     // 2. deploy the Aurora EVM in sandbox with initial call to setup admin account from sender
-    let (evm, _sk) = common::init_and_deploy_contract_with_path(&worker, WASM_PATH)
+    let (evm, _sk) = init_and_deploy_contract_with_path(&worker, WASM_PATH)
         .await
         .unwrap();
 

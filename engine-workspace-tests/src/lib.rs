@@ -1,17 +1,12 @@
-// Global dependancies for all tests
-pub mod common;
 use workspaces::AccountId;
 use aurora_workspace::{
-    contract::{EthProverConfig}, types::{SecretKey, KeyType},
+    contract::{EthProverConfig}, types::KeyType,
 };
-use aurora_engine::parameters::{InitCallArgs, PauseEthConnectorCallArgs, SetContractDataCallArgs};
-use aurora_engine::fungible_token::FungibleTokenMetadata;
 use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Serialize, Deserialize};
 use std::str::FromStr;
-use aurora_workspace::{EvmContract, InitConfig};
-use workspaces::network::Sandbox;
-use workspaces::{Worker, Account};
+use aurora_workspace::InitConfig;
+use workspaces::Account;
 use std::io::{self, Write};
 
 

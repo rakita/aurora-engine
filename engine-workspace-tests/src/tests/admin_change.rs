@@ -1,4 +1,7 @@
-use crate::*;
+use aurora_engine::{parameters::{InitCallArgs, SetContractDataCallArgs, PauseEthConnectorCallArgs}, fungible_token::FungibleTokenMetadata};
+use aurora_workspace::types::SecretKey;
+
+use crate::{*, test_utils::{init_and_deploy_contract_with_path, init_and_deploy_contract_with_path_on_admin_change}};
 
 #[tokio::test]
 async fn test_new_eth_connector() {
@@ -8,7 +11,7 @@ async fn test_new_eth_connector() {
     worker.fast_forward(1).await.unwrap();
 
     // 2. deploy the Aurora EVM in sandbox with initial call to setup admin account from sender
-    let (evm, _sk) = common::init_and_deploy_contract_with_path(
+    let (evm, _sk) = init_and_deploy_contract_with_path(
         &worker,
         WASM_PATH,
     )
@@ -54,7 +57,7 @@ async fn test_set_eth_connector_contract_data() {
     worker.fast_forward(1).await.unwrap();
 
     // 2. deploy the Aurora EVM in sandbox.
-    let (evm, _sk) = common::init_and_deploy_contract_with_path(
+    let (evm, _sk) = init_and_deploy_contract_with_path(
         &worker,
         WASM_PATH,
     )
@@ -103,7 +106,7 @@ async fn test_set_paused_flags() {
     worker.fast_forward(1).await.unwrap();
 
     // 2. deploy the Aurora EVM in sandbox.
-    let (evm, _sk) = common::init_and_deploy_contract_with_path(
+    let (evm, _sk) = init_and_deploy_contract_with_path(
         &worker,
         WASM_PATH,
     )
@@ -145,7 +148,7 @@ async fn test_set_owner() {
     worker.fast_forward(1).await.unwrap();
 
     // 2. deploy the Aurora EVM in sandbox.
-    let (evm, _sk, owner) = common::init_and_deploy_contract_with_path_on_admin_change(
+    let (evm, _sk, owner) = init_and_deploy_contract_with_path_on_admin_change(
         &worker,
         "./res/aurora-testnet-set-owner.wasm",
     )

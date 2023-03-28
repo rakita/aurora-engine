@@ -19,6 +19,7 @@ engine-standalone-tracing = { path = "../engine-standalone-tracing", default-fea
 workspaces = { git = "https://github.com/near/workspaces-rs.git", rev = "34bb786470700c7f95b0c88201a58b8792b6dba1" }
 ethabi = "18.0.0"
 hex = "0.4.3"
+git2 = "0.16"
 ethereum-types = "0.13.1"
 ethereum-tx-sign = "6.0.1"
 anyhow = "1"

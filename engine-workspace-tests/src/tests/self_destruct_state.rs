@@ -1,7 +1,8 @@
+use crate::test_utils::init_and_deploy_contract_with_path;
 use crate::test_utils::self_destruct::{
     SelfDestruct, SelfDestructConstructor, SelfDestructFactory, SelfDestructFactoryConstructor,
 };
-use crate::{common, WASM_PATH};
+use crate::{WASM_PATH};
 use anyhow::Result;
 use aurora_engine_types::types::Address;
 use aurora_workspace_types::output::TransactionStatus;
@@ -18,7 +19,7 @@ async fn test_self_destruct_reset_state() -> Result<()> {
     worker.fast_forward(1).await?;
 
     // 2. deploy the Aurora EVM in sandbox with initial call to setup admin account from sender
-    let (evm, _sk) = common::init_and_deploy_contract_with_path(&worker, WASM_PATH)
+    let (evm, _sk) = init_and_deploy_contract_with_path(&worker, WASM_PATH)
         .await
         .unwrap();
 
@@ -98,7 +99,7 @@ async fn test_self_destruct_with_submit() -> Result<()> {
     worker.fast_forward(1).await?;
 
     // 2. deploy the Aurora EVM in sandbox with initial call to setup admin account from sender
-    let (evm, _sk) = common::init_and_deploy_contract_with_path(&worker, WASM_PATH)
+    let (evm, _sk) = init_and_deploy_contract_with_path(&worker, WASM_PATH)
         .await
         .unwrap();
 

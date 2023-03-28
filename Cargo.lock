@@ -1567,6 +1567,7 @@ dependencies = [
  "ethabi 18.0.0",
  "ethereum-tx-sign",
  "ethereum-types 0.13.1",
+ "git2",
  "hex 0.4.3",
  "near-sdk 4.1.1",
  "near-units",

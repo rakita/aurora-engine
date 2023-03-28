@@ -27,6 +27,12 @@ pub struct DeployedContract {
     pub address: Address,
 }
 
+impl DeployedContract {
+    pub fn addr_to_bytes20(&self) -> [u8; 20] {
+        addr_to_bytes20(&self.address)
+    }
+}
+
 /// A struct representing an Ethereum smart contract artifact
 #[derive(Deserialize)]
 struct ExtendedJsonSolidityArtifact {

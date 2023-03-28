@@ -1,9 +1,11 @@
+use aurora_engine_types::U256;
 use ethereum_tx_sign::LegacyTransaction;
 use aurora_engine_types::types::{Address, Wei};
 use crate::test_utils::solidity;
 use aurora_engine_transactions::NormalizedEthTransaction;
 use std::path::{Path, PathBuf};
 use std::sync::Once;
+use git2;
 
 pub(crate) struct ERC20Constructor(pub solidity::ContractConstructor);
 
@@ -27,7 +29,7 @@ impl ERC20Constructor {
         ))
     }
 
-    pub fn deploy(&self, name: &str, symbol: &str, nonce: U256) -> LegacyTransaction {
+    pub fn deploy(&self, name: &str, symbol: &str, nonce: u128) -> LegacyTransaction {
         let data = self
             .0
             .abi
@@ -74,7 +76,7 @@ impl ERC20Constructor {
 }
 
 impl ERC20 {
-    pub fn mint(&self, recipient: Address, amount: U256, nonce: U256) -> LegacyTransaction {
+    pub fn mint(&self, recipient: Address, amount: U256, nonce: u128) -> LegacyTransaction {
         let data = self
             .0
             .abi
@@ -91,13 +93,13 @@ impl ERC20 {
             nonce,
             gas_price: Default::default(),
             gas: u64::MAX.into(),
-            to: Some(self.0.address),
+            to: Some(self.0.addr_to_bytes20()),
             value: Default::default(),
             data,
         }
     }
 
-    pub fn transfer(&self, recipient: Address, amount: U256, nonce: U256) -> LegacyTransaction {
+    pub fn transfer(&self, recipient: Address, amount: U256, nonce: u128) -> LegacyTransaction {
         let data = self
             .0
             .abi
@@ -113,7 +115,7 @@ impl ERC20 {
             nonce,
             gas_price: Default::default(),
             gas: u64::MAX.into(),
-            to: Some(self.0.address),
+            to: Some(self.0.addr_to_bytes20()),
             value: Default::default(),
             data,
         }
@@ -124,7 +126,7 @@ impl ERC20 {
         from: Address,
         to: Address,
         amount: U256,
-        nonce: U256,
+        nonce: u128,
     ) -> LegacyTransaction {
         let data = self
             .0
@@ -142,13 +144,13 @@ impl ERC20 {
             nonce,
             gas_price: Default::default(),
             gas: u64::MAX.into(),
-            to: Some(self.0.address),
+            to: Some(self.0.addr_to_bytes20()),
             value: Default::default(),
             data,
         }
     }
 
-    pub fn approve(&self, spender: Address, amount: U256, nonce: U256) -> LegacyTransaction {
+    pub fn approve(&self, spender: Address, amount: U256, nonce: u128) -> LegacyTransaction {
         let data = self
             .0
             .abi
@@ -164,13 +166,13 @@ impl ERC20 {
             nonce,
             gas_price: Default::default(),
             gas: u64::MAX.into(),
-            to: Some(self.0.address),
+            to: Some(self.0.addr_to_bytes20()),
             value: Default::default(),
             data,
         }
     }
 
-    pub fn balance_of(&self, address: Address, nonce: U256) -> LegacyTransaction {
+    pub fn balance_of(&self, address: Address, nonce: u128) -> LegacyTransaction {
         let data = self
             .0
             .abi
@@ -183,7 +185,7 @@ impl ERC20 {
             nonce,
             gas_price: Default::default(),
             gas: u64::MAX.into(),
-            to: Some(self.0.address),
+            to: Some(self.0.addr_to_bytes20()),
             value: Default::default(),
             data,
         }
@@ -194,12 +196,12 @@ pub(crate) fn legacy_into_normalized_tx(tx: LegacyTransaction) -> NormalizedEthT
     NormalizedEthTransaction {
         address: Default::default(),
         chain_id: None,
-        nonce: tx.nonce,
-        gas_limit: tx.gas,
-        max_priority_fee_per_gas: tx.gas_price,
-        max_fee_per_gas: tx.gas_price,
-        to: tx.to,
-        value: tx.value,
+        nonce: tx.nonce.into(),
+        gas_limit: tx.gas.into(),
+        max_priority_fee_per_gas: tx.gas_price.into(),
+        max_fee_per_gas: tx.gas_price.into(),
+        to: Some(Address::from_array(tx.to.unwrap())),
+        value: Wei::new(U256::from(tx.value)),
         data: tx.data,
         access_list: Vec::new(),
     }

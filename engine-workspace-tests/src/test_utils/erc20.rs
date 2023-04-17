@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Once;
 use git2;
 
+#[derive(Debug)]
 pub(crate) struct ERC20Constructor(pub solidity::ContractConstructor);
 
 pub(crate) struct ERC20(pub solidity::DeployedContract);

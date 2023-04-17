@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// A struct representing an Ethereum smart contract constructor
+#[derive(Debug)]
 pub struct ContractConstructor {
     /// The contract's ABI
     pub abi: Contract,

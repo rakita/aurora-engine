@@ -2,7 +2,7 @@ use crate::test_utils::init_and_deploy_contract_with_path;
 use crate::test_utils::self_destruct::{
     SelfDestruct, SelfDestructConstructor, SelfDestructFactory, SelfDestructFactoryConstructor,
 };
-use crate::{WASM_PATH};
+use crate::WASM_PATH;
 use anyhow::Result;
 use aurora_engine_types::types::Address;
 use aurora_workspace_types::output::TransactionStatus;
@@ -19,15 +19,13 @@ async fn test_self_destruct_reset_state() -> Result<()> {
     worker.fast_forward(1).await?;
 
     // 2. deploy the Aurora EVM in sandbox with initial call to setup admin account from sender
-    let (evm, _sk) = init_and_deploy_contract_with_path(&worker, WASM_PATH)
-        .await
-        .unwrap();
+    let (evm, _sk) = init_and_deploy_contract_with_path(&worker, WASM_PATH).await?;
 
     let sd_factory_ctr = SelfDestructFactoryConstructor::load();
     // Create a deploy transaction and sign it.
     let signed_deploy_tx = {
         let deploy_tx = sd_factory_ctr.deploy(0);
-        let ecdsa = deploy_tx.ecdsa(&PRIVATE_KEY).unwrap();
+        let ecdsa = deploy_tx.ecdsa(&_sk.genesis_key).unwrap();
         deploy_tx.sign(&ecdsa)
     };
 
@@ -145,6 +143,6 @@ async fn test_self_destruct_with_submit() -> Result<()> {
         .into();
 
     sd.finish_using_submit(evm.clone(), 2, PRIVATE_KEY).await?;
-    
+
     Ok(())
 }

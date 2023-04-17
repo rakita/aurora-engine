@@ -1,15 +1,15 @@
+use super::*;
 use crate::prelude::{sdk, Address, Wei, H256, U256};
-use crate::{WASM_PATH, OWNER_ACCOUNT_ID, PROVER_ACCOUNT_ID, AURORA_LOCAL_CHAIN_ID};
+use crate::{AURORA_LOCAL_CHAIN_ID, OWNER_ACCOUNT_ID, PROVER_ACCOUNT_ID, WASM_PATH};
 use aurora_workspace::contract::EthProverConfig;
 use aurora_workspace::types::KeyType;
 use aurora_workspace::{types::SecretKey, EvmContract};
-use aurora_workspace_types::AccountId;
 use aurora_workspace_types::output::TransactionStatus;
+use aurora_workspace_types::AccountId;
 use ethereum_tx_sign::{LegacyTransaction, Transaction};
 use libsecp256k1::PublicKey;
-use super::*;
-use workspaces::{network::Sandbox, Worker};
 use rand::RngCore;
+use workspaces::{network::Sandbox, Worker};
 
 use self::solidity::{ContractConstructor, DeployedContract};
 pub mod erc20;
@@ -17,7 +17,6 @@ pub mod random;
 pub mod self_destruct;
 pub mod solidity;
 pub mod weth;
-
 
 pub(crate) fn address_from_secret_key(sk: &libsecp256k1::SecretKey) -> Address {
     let pk = PublicKey::from_secret_key(&sk);
@@ -35,22 +34,26 @@ pub(crate) fn addr_to_bytes20(address: &Address) -> [u8; 20] {
     bytes20
 }
 
-
 #[derive(Debug, Clone)]
 pub struct Signer {
-    pub nonce: u64,
+    pub nonce: u128,
     pub private_key: [u8; 32],
+    pub genesis_key: [u8; 32],
     pub near_secret_key: SecretKey,
     pub eth_secret_key: libsecp256k1::SecretKey,
 }
 
 impl Signer {
     pub fn new(private_key: [u8; 32]) -> Self {
-        let near_secret_key = SecretKey::from_seed(KeyType::ED25519, hex::encode(&private_key).as_str());
+        let near_secret_key =
+            SecretKey::from_seed(KeyType::ED25519, hex::encode(&private_key).as_str());
         let eth_secret_key = libsecp256k1::SecretKey::parse(&private_key).unwrap();
+        let genesis_key = PRIVATE_KEY;
+
         Self {
             nonce: 0,
             private_key,
+            genesis_key,
             near_secret_key,
             eth_secret_key,
         }
@@ -63,7 +66,7 @@ impl Signer {
         Self::new(private_key)
     }
 
-    pub fn use_nonce(&mut self) -> u64 {
+    pub fn use_nonce(&mut self) -> u128 {
         let nonce = self.nonce;
         self.nonce += 1;
         nonce
@@ -80,6 +83,7 @@ pub(crate) async fn create_account(
         .create_tla(AccountId::from_str(id)?, secret)
         .await?
         .into_result()?;
+    worker.fast_forward(1).await?;
     Ok(account)
 }
 
@@ -104,6 +108,7 @@ pub(crate) async fn init_and_deploy_contract_with_path(
     };
     let wasm = std::fs::read(path)?;
     // create contract
+    println!("Deploying Aurora Engine");
     let contract = EvmContract::deploy_and_init(evm_account.clone(), init_config, wasm).await?;
 
     Ok((contract, signer))
@@ -176,13 +181,28 @@ pub(crate) async fn init_and_deploy_sputnik(
     Ok(contract)
 }
 
+pub async fn deploy_evm() -> anyhow::Result<(Worker<Sandbox>, EvmContract, Signer)> {
+    let worker = workspaces::sandbox().await.unwrap();
+
+    worker.fast_forward(1).await.unwrap();
+
+    // 2. deploy the Aurora EVM in sandbox with initial call to setup admin account from sender
+    let (evm, signer) = init_and_deploy_contract_with_path(&worker, WASM_PATH).await?;
+
+    worker.fast_forward(1).await.unwrap();
+
+    return Ok((worker, evm, signer));
+}
+
 pub async fn submit_with_signer(
-    evm: EvmContract,
-    signer: &mut Signer,
+    worker: &Worker<Sandbox>,
+    evm: &EvmContract,
+    signer: &Signer,
     tx: LegacyTransaction,
 ) -> Result<TransactionStatus, anyhow::Error> {
+    assert_eq!(signer.nonce, tx.nonce);
     let signed_tx = {
-        let ecdsa = tx.ecdsa(&signer.private_key).unwrap();
+        let ecdsa = tx.ecdsa(&signer.genesis_key).unwrap();
         tx.sign(&ecdsa)
     };
 
@@ -195,99 +215,52 @@ pub async fn submit_with_signer(
         .into_value()
         .into_result()?;
 
+    worker.fast_forward(1).await?;
     Ok(result)
 }
 
+pub async fn deploy_contract<F: FnOnce(&T) -> LegacyTransaction, T: Into<ContractConstructor>>(
+    worker: &Worker<Sandbox>,
+    evm: EvmContract,
+    account: &Signer,
+    constructor_tx: F,
+    contract_constructor: T,
+) -> anyhow::Result<(EvmContract, DeployedContract)> {
+    let tx = constructor_tx(&contract_constructor);
+    println!(
+        "Comparing nonce from tx and account: {:?} {:?} {}",
+        tx.nonce,
+        account.nonce,
+        tx.nonce == account.nonce.into()
+    );
+    let signed_tx = {
+        let ecdsa = tx.ecdsa(&account.genesis_key).unwrap();
+        tx.sign(&ecdsa)
+    };
+    println!("Deploying contract with account: {:?}", account);
+    let output = match evm
+        .as_account()
+        .submit(signed_tx)
+        .max_gas()
+        .transact()
+        .await?
+        .into_value()
+        .into_result()?
+    {
+        TransactionStatus::Succeed(bytes) => {
+            let mut address_bytes = [0u8; 20];
+            address_bytes.copy_from_slice(&bytes);
+            address_bytes
+        }
+        _ => panic!("Failed to deploy contract!"),
+    };
+    let address = Address::try_from_slice(&output).unwrap();
+    let contract_constructor: ContractConstructor = contract_constructor.into();
 
-#[derive(Debug, Clone)]
-pub struct AuroraWorkspaceRunner {
-    pub worker: Worker<Sandbox>,
-    pub evm: EvmContract,
-    pub signer: Signer,
-}
+    worker.fast_forward(1).await?;
 
-impl AuroraWorkspaceRunner {
-    pub async fn new() -> anyhow::Result<Self> {
-        let worker = workspaces::sandbox().await.unwrap();
-
-        worker.fast_forward(1).await.unwrap();
-
-        // 2. deploy the Aurora EVM in sandbox with initial call to setup admin account from sender
-        let (evm, signer) = init_and_deploy_contract_with_path(&worker, WASM_PATH).await?;
-
-        worker.fast_forward(1).await.unwrap();
-
-        return Ok(AuroraWorkspaceRunner {
-            worker,
-            evm,
-            signer,
-        });
-    }
-
-    pub async fn submit_with_signer(&self, signer: &Signer, tx: LegacyTransaction) -> Result<TransactionStatus, anyhow::Error> {
-        let signed_tx = {
-            let ecdsa = tx.ecdsa(&signer.private_key).unwrap();
-            tx.sign(&ecdsa)
-        };
-    
-        let result = self.evm
-            .as_account()
-            .submit(signed_tx)
-            .max_gas()
-            .transact()
-            .await?
-            .into_value()
-            .into_result()?;
-    
-        Ok(result)
-    }
-
-    pub async fn create_account(
-        worker: &Worker<Sandbox>,
-        id: &str,
-        sk: Option<SecretKey>,
-    ) -> anyhow::Result<Account> {
-        let secret = sk.unwrap_or_else(|| SecretKey::from_random(KeyType::ED25519));
-        let account = worker
-            .create_tla(AccountId::from_str(id)?, secret)
-            .await?
-            .into_result()?;
-        Ok(account)
-    }
-
-    pub async fn deploy_contract<F: FnOnce(&T) -> LegacyTransaction, T: Into<ContractConstructor>>(
-        &self,
-        account: &Signer,
-        constructor_tx: F,
-        contract_constructor: T,
-    ) -> anyhow::Result<DeployedContract, anyhow::Error> {
-        let tx = constructor_tx(&contract_constructor);
-        println!("nonce: {:?} {:?} {}", tx.nonce, account.nonce, tx.nonce == account.nonce);
-        let signed_tx = {
-            let ecdsa = tx.ecdsa(&account.private_key).unwrap();
-            tx.sign(&ecdsa)
-        };
-        println!("Deploying contract with account: {:?}", account);
-        let output = match self.evm
-            .as_account()
-            .submit(signed_tx)
-            .max_gas()
-            .transact()
-            .await?
-            .into_value()
-            .into_result()? {
-                TransactionStatus::Succeed(bytes) => {
-                    let mut address_bytes = [0u8; 20];
-                    address_bytes.copy_from_slice(&bytes);
-                    address_bytes
-                }
-                _ => panic!("Failed to deploy contract!"),
-            };
-        let address =  Address::try_from_slice(&output).unwrap();
-        let contract_constructor: ContractConstructor = contract_constructor.into();
-        Ok(DeployedContract {
-            abi: contract_constructor.abi,
-            address,
-        })
-    }
+    Ok((evm, DeployedContract {
+        abi: contract_constructor.abi,
+        address,
+    }))
 }

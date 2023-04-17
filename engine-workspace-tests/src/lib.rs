@@ -17,6 +17,7 @@ const AURORA_LOCAL_CHAIN_ID: u64 = 1313161556;
 pub const OWNER_ACCOUNT_ID: &str = "owner.test.near";
 const PROVER_ACCOUNT_ID: &str = "prover.test.near";
 const WASM_PATH: &str = "../bin/aurora-local.wasm";
+const PRIVATE_KEY: [u8; 32] = [88u8; 32];
 
 
 #[cfg(test)]

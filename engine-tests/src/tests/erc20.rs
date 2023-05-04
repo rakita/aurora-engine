@@ -107,6 +107,7 @@ fn profile_erc20_get_balance() {
     assert!(result.is_ok());
 
     // call costs less than 2 Tgas
+    println!("{profile:?}");
     test_utils::assert_gas_bound(profile.all_gas(), 2);
     // at least 70% of the cost is spent on wasm computation (as opposed to host functions)
     let wasm_fraction = (100 * profile.wasm_gas()) / profile.all_gas();

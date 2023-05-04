@@ -111,7 +111,7 @@ fn test_transaction_to_zero_address() {
     context.input = tx_bytes;
     // Prior to the fix the zero address is interpreted as None, causing a contract deployment.
     // It also incorrectly derives the sender address, so does not increment the right nonce.
-    context.block_index = ZERO_ADDRESS_FIX_HEIGHT - 1;
+    context.block_height = ZERO_ADDRESS_FIX_HEIGHT - 1;
     let result = runner
         .submit_raw(test_utils::SUBMIT, &context, &[])
         .unwrap();
@@ -120,7 +120,7 @@ fn test_transaction_to_zero_address() {
     assert_eq!(runner.get_nonce(&address), U256::zero());
 
     // After the fix this transaction is simply a transfer of 0 ETH to the zero address
-    context.block_index = ZERO_ADDRESS_FIX_HEIGHT;
+    context.block_height = ZERO_ADDRESS_FIX_HEIGHT;
     let result = runner
         .submit_raw(test_utils::SUBMIT, &context, &[])
         .unwrap();
@@ -357,7 +357,7 @@ fn test_solidity_pure_bench() {
     let code = near_primitives_core::contract::ContractCode::new(contract_bytes, None);
     let mut context = runner.context.clone();
     context.input = loop_limit.to_le_bytes().to_vec();
-    let (outcome, error) = match near_vm_runner::run(
+    let (outcome, error) = test_utils::interpret_vm_result(near_vm_runner::run(
         &code,
         "cpu_ram_soak_test",
         &mut runner.ext,
@@ -367,10 +367,7 @@ fn test_solidity_pure_bench() {
         &[],
         runner.current_protocol_version,
         Some(&runner.cache),
-    ) {
-        near_vm_runner::VMResult::Aborted(outcome, error) => (Some(outcome), Some(error)),
-        near_vm_runner::VMResult::Ok(outcome) => (Some(outcome), None),
-    };
+    ));
     if let Some(e) = error {
         panic!("{e:?}");
     }
@@ -800,8 +797,6 @@ fn test_transfer_charging_gas_success() {
 
 #[test]
 fn test_eth_transfer_charging_gas_not_enough_balance() {
-    use near_vm_errors::{FunctionCallError, HostError, VMError};
-
     let (mut runner, mut source_account, dest_address) = initialize_transfer();
     let source_address = test_utils::address_from_secret_key(&source_account.secret_key);
     let transaction = |nonce| {
@@ -826,10 +821,8 @@ fn test_eth_transfer_charging_gas_not_enough_balance() {
     let error = runner
         .submit_with_signer(&mut source_account, transaction)
         .unwrap_err();
-    assert!(matches!(error, VMError::FunctionCallError(
-        FunctionCallError::HostError(
-            HostError::GuestPanic { panic_msg })) if panic_msg == "ERR_OUT_OF_FUND"
-    ));
+    let error_msg = format!("{error:?}");
+    assert!(error_msg.contains("GuestPanic") && error_msg.contains("ERR_OUT_OF_FUND"), "Unknown error {error_msg:?}");
 
     // validate post-state
     let relayer = sdk::types::near_account_to_evm_address(

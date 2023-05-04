@@ -1,8 +1,9 @@
+use near_vm_errors::VMRunnerError;
+
 use crate::prelude::{
     parameters::SubmitResult, transactions::legacy::TransactionLegacy, Address, Wei, U256,
 };
 use crate::test_utils::{self, solidity, AuroraRunner, Signer};
-use near_vm_errors::VMError;
 
 pub struct TesterConstructor(pub solidity::ContractConstructor);
 
@@ -69,7 +70,7 @@ impl Tester {
         method: &str,
         value: Wei,
         params: &[ethabi::Token],
-    ) -> Result<SubmitResult, VMError> {
+    ) -> Result<SubmitResult, VMRunnerError> {
         let data = self
             .contract
             .abi
@@ -128,7 +129,7 @@ impl Tester {
         runner: &mut AuroraRunner,
         signer: &mut Signer,
         flag: bool,
-    ) -> Result<SubmitResult, VMError> {
+    ) -> Result<SubmitResult, VMRunnerError> {
         self.call_function(
             runner,
             signer,

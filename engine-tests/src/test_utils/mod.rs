@@ -7,12 +7,13 @@ use near_primitives::runtime::config_store::RuntimeConfigStore;
 use near_primitives::version::PROTOCOL_VERSION;
 use near_primitives_core::config::VMConfig;
 use near_primitives_core::contract::ContractCode;
-use near_primitives_core::profile::ProfileData;
+use near_primitives_core::profile::ProfileDataV3 as ProfileData;
 use near_primitives_core::runtime::fees::RuntimeFeesConfig;
+use near_vm_errors::VMRunnerError;
 use near_vm_logic::mocks::mock_external::MockedExternal;
 use near_vm_logic::types::ReturnData;
 use near_vm_logic::{VMContext, VMOutcome, ViewConfig};
-use near_vm_runner::{MockCompiledContractCache, VMError};
+use near_vm_runner::MockCompiledContractCache;
 use rlp::RlpStream;
 
 use crate::prelude::fungible_token::{FungibleToken, FungibleTokenMetadata};
@@ -112,7 +113,7 @@ impl<'a> OneShotAuroraRunner<'a> {
         method_name: &str,
         caller_account_id: &str,
         input: Vec<u8>,
-    ) -> (Option<VMOutcome>, Option<VMError>, ExecutionProfile) {
+    ) -> (Option<VMOutcome>, Option<VMRunnerError>, ExecutionProfile) {
         let (outcome, error) = self.call(method_name, caller_account_id, input);
         let profile = outcome
             .as_ref()
@@ -126,7 +127,7 @@ impl<'a> OneShotAuroraRunner<'a> {
         method_name: &str,
         caller_account_id: &str,
         input: Vec<u8>,
-    ) -> (Option<VMOutcome>, Option<VMError>) {
+    ) -> (Option<VMOutcome>, Option<VMRunnerError>) {
         AuroraRunner::update_context(
             &mut self.context,
             caller_account_id,
@@ -134,7 +135,7 @@ impl<'a> OneShotAuroraRunner<'a> {
             input,
         );
 
-        match near_vm_runner::run(
+        interpret_vm_result(near_vm_runner::run(
             &self.base.code,
             method_name,
             &mut self.ext,
@@ -144,10 +145,7 @@ impl<'a> OneShotAuroraRunner<'a> {
             &[],
             self.base.current_protocol_version,
             Some(&self.base.cache),
-        ) {
-            near_vm_runner::VMResult::Aborted(outcome, error) => (Some(outcome), Some(error)),
-            near_vm_runner::VMResult::Ok(outcome) => (Some(outcome), None),
-        }
+        ) )
     }
 }
 
@@ -166,7 +164,7 @@ impl AuroraRunner {
         signer_account_id: &str,
         input: Vec<u8>,
     ) {
-        context.block_index += 1;
+        context.block_height += 1;
         context.block_timestamp += 1_000_000_000;
         context.input = input;
         context.signer_account_id = as_account_id(signer_account_id);
@@ -178,7 +176,7 @@ impl AuroraRunner {
         method_name: &str,
         caller_account_id: &str,
         input: Vec<u8>,
-    ) -> (Option<VMOutcome>, Option<VMError>) {
+    ) -> (Option<VMOutcome>, Option<VMRunnerError>) {
         self.call_with_signer(method_name, caller_account_id, caller_account_id, input)
     }
 
@@ -188,7 +186,7 @@ impl AuroraRunner {
         caller_account_id: &str,
         signer_account_id: &str,
         input: Vec<u8>,
-    ) -> (Option<VMOutcome>, Option<VMError>) {
+    ) -> (Option<VMOutcome>, Option<VMRunnerError>) {
         Self::update_context(
             &mut self.context,
             caller_account_id,
@@ -207,7 +205,7 @@ impl AuroraRunner {
                 }
             })
             .collect();
-        let (maybe_outcome, maybe_error) = match near_vm_runner::run(
+        let (maybe_outcome, maybe_error) = interpret_vm_result(near_vm_runner::run(
             &self.code,
             method_name,
             &mut self.ext,
@@ -217,10 +215,7 @@ impl AuroraRunner {
             &vm_promise_results,
             self.current_protocol_version,
             Some(&self.cache),
-        ) {
-            near_vm_runner::VMResult::Aborted(outcome, error) => (Some(outcome), Some(error)),
-            near_vm_runner::VMResult::Ok(outcome) => (Some(outcome), None),
-        };
+        ));
         if let Some(outcome) = &maybe_outcome {
             self.context.storage_usage = outcome.storage_usage;
             self.previous_logs = outcome.logs.clone();
@@ -354,19 +349,19 @@ impl AuroraRunner {
         );
 
         if let Some(standalone_runner) = &mut self.standalone_runner {
-            standalone_runner.env.block_height = self.context.block_index;
+            standalone_runner.env.block_height = self.context.block_height;
             standalone_runner.mint_account(address, init_balance, init_nonce, code);
             self.validate_standalone();
         }
 
-        self.context.block_index += 1;
+        self.context.block_height += 1;
     }
 
     pub fn submit_with_signer<F: FnOnce(U256) -> TransactionLegacy>(
         &mut self,
         signer: &mut Signer,
         make_tx: F,
-    ) -> Result<SubmitResult, VMError> {
+    ) -> Result<SubmitResult, VMRunnerError> {
         self.submit_with_signer_profiled(signer, make_tx)
             .map(|(result, _)| result)
     }
@@ -375,7 +370,7 @@ impl AuroraRunner {
         &mut self,
         signer: &mut Signer,
         make_tx: F,
-    ) -> Result<(SubmitResult, ExecutionProfile), VMError> {
+    ) -> Result<(SubmitResult, ExecutionProfile), VMRunnerError> {
         let nonce = signer.use_nonce();
         let tx = make_tx(nonce.into());
         self.submit_transaction_profiled(&signer.secret_key, tx)
@@ -385,7 +380,7 @@ impl AuroraRunner {
         &mut self,
         account: &SecretKey,
         transaction: TransactionLegacy,
-    ) -> Result<SubmitResult, VMError> {
+    ) -> Result<SubmitResult, VMRunnerError> {
         self.submit_transaction_profiled(account, transaction)
             .map(|(result, _)| result)
     }
@@ -394,7 +389,7 @@ impl AuroraRunner {
         &mut self,
         account: &SecretKey,
         transaction: TransactionLegacy,
-    ) -> Result<(SubmitResult, ExecutionProfile), VMError> {
+    ) -> Result<(SubmitResult, ExecutionProfile), VMRunnerError> {
         let signed_tx = sign_transaction(transaction, Some(self.chain_id), account);
         let (output, maybe_err) =
             self.call(SUBMIT, CALLER_ACCOUNT_ID, rlp::encode(&signed_tx).to_vec());
@@ -408,7 +403,7 @@ impl AuroraRunner {
         transaction: TransactionLegacy,
         max_gas_price: u128,
         gas_token_address: Option<Address>,
-    ) -> Result<SubmitResult, VMError> {
+    ) -> Result<SubmitResult, VMRunnerError> {
         self.submit_transaction_with_args_profiled(
             account,
             transaction,
@@ -424,7 +419,7 @@ impl AuroraRunner {
         transaction: TransactionLegacy,
         max_gas_price: u128,
         gas_token_address: Option<Address>,
-    ) -> Result<(SubmitResult, ExecutionProfile), VMError> {
+    ) -> Result<(SubmitResult, ExecutionProfile), VMRunnerError> {
         let signed_tx = sign_transaction(transaction, Some(self.chain_id), account);
         let args = SubmitArgs {
             tx_data: rlp::encode(&signed_tx).to_vec(),
@@ -442,8 +437,8 @@ impl AuroraRunner {
 
     fn profile_outcome(
         output: Option<VMOutcome>,
-        error: Option<VMError>,
-    ) -> Result<(SubmitResult, ExecutionProfile), VMError> {
+        error: Option<VMRunnerError>,
+    ) -> Result<(SubmitResult, ExecutionProfile), VMRunnerError> {
         error.map_or_else(
             || {
                 let output = output.unwrap();
@@ -477,7 +472,7 @@ impl AuroraRunner {
         }
     }
 
-    pub fn view_call(&self, args: &ViewCallArgs) -> Result<TransactionStatus, VMError> {
+    pub fn view_call(&self, args: &ViewCallArgs) -> Result<TransactionStatus, VMRunnerError> {
         let input = args.try_to_vec().unwrap();
         let mut runner = self.one_shot();
         runner.context.view_config = Some(ViewConfig {
@@ -493,7 +488,7 @@ impl AuroraRunner {
     pub fn profiled_view_call(
         &self,
         args: &ViewCallArgs,
-    ) -> (Result<TransactionStatus, VMError>, ExecutionProfile) {
+    ) -> (Result<TransactionStatus, VMRunnerError>, ExecutionProfile) {
         let input = args.try_to_vec().unwrap();
         let mut runner = self.one_shot();
         runner.context.view_config = Some(ViewConfig {
@@ -550,8 +545,8 @@ impl AuroraRunner {
 
     fn bytes_from_outcome(
         maybe_outcome: Option<VMOutcome>,
-        maybe_error: Option<VMError>,
-    ) -> Result<Vec<u8>, VMError> {
+        maybe_error: Option<VMRunnerError>,
+    ) -> Result<Vec<u8>, VMRunnerError> {
         maybe_error.map_or_else(
             || {
                 let bytes = maybe_outcome.unwrap().return_data.as_value().unwrap();
@@ -611,7 +606,7 @@ impl Default for AuroraRunner {
                 signer_account_pk: vec![],
                 predecessor_account_id: as_account_id(ORIGIN),
                 input: vec![],
-                block_index: 0,
+                block_height: 0,
                 block_timestamp: 0,
                 epoch_height: 0,
                 account_balance: 10u128.pow(25),
@@ -633,21 +628,34 @@ impl Default for AuroraRunner {
     }
 }
 
+// TODO: this is for backwards compatibility with the previous API.
+// It would be better to refactor things to use the new API.
+pub fn interpret_vm_result(result: Result<VMOutcome, VMRunnerError>) -> (Option<VMOutcome>, Option<VMRunnerError>) {
+    match result {
+        Err(error) => (None, Some(error)),
+            Ok(outcome) => {
+                let maybe_err = outcome.aborted.as_ref().map(|e| VMRunnerError::WasmUnknownError { debug_message: format!("{e:?}") });
+                (Some(outcome), maybe_err)
+            }
+    }
+}
+
 /// Wrapper around `ProfileData` to still include the wasm gas usage
 /// (which was removed in `https://github.com/near/nearcore/pull/4438`).
 #[derive(Debug, Default, Clone)]
 pub struct ExecutionProfile {
     pub host_breakdown: ProfileData,
     wasm_gas: u64,
+    total_gas: u64,
 }
 
 impl ExecutionProfile {
     pub fn new(outcome: &VMOutcome) -> Self {
-        let wasm_gas =
-            outcome.burnt_gas - outcome.profile.host_gas() - outcome.profile.action_gas();
+        let wasm_gas = outcome.profile.get_wasm_cost();
         Self {
             host_breakdown: outcome.profile.clone(),
             wasm_gas,
+            total_gas: outcome.burnt_gas,
         }
     }
 
@@ -656,7 +664,7 @@ impl ExecutionProfile {
     }
 
     pub fn all_gas(&self) -> u64 {
-        self.wasm_gas + self.host_breakdown.host_gas() + self.host_breakdown.action_gas()
+        self.total_gas
     }
 }
 

@@ -6,8 +6,6 @@ use crate::test_utils::{
 use aurora_engine::parameters::{PausePrecompilesCallArgs, TransactionStatus};
 use aurora_engine_types::types::Wei;
 use borsh::BorshSerialize;
-use near_vm_errors::{FunctionCallError, HostError};
-use near_vm_runner::VMError;
 
 const EXIT_TO_ETHEREUM_FLAG: u32 = 0b10;
 const CALLED_ACCOUNT_ID: &str = "aurora";
@@ -60,16 +58,8 @@ fn test_executing_paused_precompile_throws_error() {
     assert!(result.is_err(), "{result:?}");
 
     let error = result.unwrap_err();
-    match &error {
-        VMError::FunctionCallError(fn_error) => match fn_error {
-            FunctionCallError::HostError(err) => match err {
-                HostError::GuestPanic { panic_msg } => assert_eq!(panic_msg, "ERR_PAUSED"),
-                other => panic!("Unexpected host error {other:?}"),
-            },
-            other => panic!("Unexpected function call error {other:?}"),
-        },
-        other => panic!("Unexpected VM error {other:?}"),
-    };
+    let error_msg = format!("{error:?}");
+    assert!(error_msg.contains("GuestPanic") && error_msg.contains("ERR_PAUSED"), "Unknown error {error_msg:?}");
 }
 
 #[test]

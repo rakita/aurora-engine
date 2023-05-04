@@ -192,7 +192,7 @@ impl StandaloneRunner {
         promise_results: &[PromiseResult],
     ) -> Result<SubmitResult, engine::EngineError> {
         let mut env = self.env.clone();
-        env.block_height = ctx.block_index;
+        env.block_height = ctx.block_height;
         env.attached_deposit = ctx.attached_deposit;
         env.block_timestamp = aurora_engine_sdk::env::Timestamp::new(ctx.block_timestamp);
         env.predecessor_account_id = ctx.predecessor_account_id.as_ref().parse().unwrap();

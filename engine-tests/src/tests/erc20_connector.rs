@@ -6,7 +6,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use ethabi::Token;
 use libsecp256k1::SecretKey;
 use near_vm_logic::VMOutcome;
-use near_vm_runner::VMError;
+use near_vm_errors::VMRunnerError;
 use serde_json::json;
 use sha3::Digest;
 
@@ -15,7 +15,7 @@ const INITIAL_NONCE: u64 = 0;
 
 pub struct CallResult {
     outcome: Option<VMOutcome>,
-    error: Option<VMError>,
+    error: Option<VMRunnerError>,
 }
 
 impl CallResult {

@@ -1,4 +1,4 @@
-use near_vm_logic::mocks::mock_external::MockedExternal;
+use near_vm_logic::{mocks::mock_external::MockedExternal, StorageGetMode};
 
 /// Derived from mainnet data reported here: `https://hackmd.io/@birchmd/r1HRjr0P9`
 /// Uses the formulas:
@@ -53,10 +53,11 @@ impl near_vm_logic::External for MockedExternalWithTrie {
     fn storage_get<'a>(
         &'a self,
         key: &[u8],
+        mode: StorageGetMode,
     ) -> Result<Option<Box<dyn near_vm_logic::ValuePtr + 'a>>, near_vm_logic::VMLogicError> {
         self.increment_new_trie_node_count(MAINNET_AVERAGE_TOUCHED_TRIE_PER_READ);
         self.increment_cached_trie_node_count(MAINNET_AVERAGE_READ_CACHED_TRIE_PER_READ);
-        self.underlying.storage_get(key)
+        self.underlying.storage_get(key, mode)
     }
 
     fn storage_remove(&mut self, key: &[u8]) -> Result<(), near_vm_logic::VMLogicError> {
@@ -68,8 +69,8 @@ impl near_vm_logic::External for MockedExternalWithTrie {
         self.underlying.storage_remove_subtree(prefix)
     }
 
-    fn storage_has_key(&mut self, key: &[u8]) -> Result<bool, near_vm_logic::VMLogicError> {
-        self.underlying.storage_has_key(key)
+    fn storage_has_key(&mut self, key: &[u8], mode: StorageGetMode,) -> Result<bool, near_vm_logic::VMLogicError> {
+        self.underlying.storage_has_key(key, mode)
     }
 
     fn validator_stake(

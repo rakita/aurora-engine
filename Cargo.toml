@@ -5,7 +5,7 @@ homepage = "https://github.com/aurora-is-near/aurora-engine"
 repository = "https://github.com/aurora-is-near/aurora-engine"
 license = "CC0-1.0"
 readme = "README.md"
-publish = false
+publish = true
 
 [workspace.dependencies]
 aurora-engine = { path = "engine", default-features = false }
